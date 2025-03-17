@@ -1,4 +1,3 @@
-# unsupervised-light-enhance-ICLR2025
 # Interpretable Unsupervised Joint Denoising and Enhancement for Real-World low-light Scenarios (ICLR2025)
 
 [Paper] | [Openreview](https://openreview.net/forum?id=PVHoELf5UN&noteId=tWR79MUc4B)
@@ -43,6 +42,12 @@ You can run the following code for testing：
 
     python eval.py --data_test path-to-data-folder \
                    --output_folder path-to-save-output
+
+## Evaluation
+
+You can obtain the quantitative metrics of the experiments by running the following command：
+
+    python measure.py
 
 ## Results
 
