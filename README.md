@@ -60,7 +60,7 @@ You can obtain the quantitative metrics of the experiments by running the follow
 </p>
 
 ## Citation
-If you use DiffIR, please consider citing:
+If you use our project, please consider citing:
 
     @article{li2025Interpretable,
       title={Interpretable Unsupervised Joint Denoising and Enhancement for Real-World low-light Scenarios Unsupervised Joint Denoising and Enhancement for Real-World low-light Scenarios},
