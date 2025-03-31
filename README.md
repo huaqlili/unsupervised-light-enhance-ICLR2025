@@ -1,10 +1,11 @@
 # Interpretable Unsupervised Joint Denoising and Enhancement for Real-World low-light Scenarios (ICLR2025)
 
-[Paper] | [Openreview](https://openreview.net/forum?id=PVHoELf5UN&noteId=tWR79MUc4B)
+[Paper](https://arxiv.org/abs/2503.14535) | [Openreview](https://openreview.net/forum?id=PVHoELf5UN&noteId=tWR79MUc4B)
 
 #### News
 - **Jan 22, 2025:**  Our work of unsupervised joint denoising and enhancement has been accepted to ICLR 2025!
 - **Mar 17, 2025:**  We have released the pretrained model weights and testing code!
+- **Mar 31, 2025:**  We have released the training code!
 
 
 <hr />
@@ -21,8 +22,11 @@
 
 ## Installation
 
-     pyhton=3.7
+     python=3.7
      pytorch=1.11.0
+     torchvision==0.12.0 
+     torchaudio==0.11.0 
+     cudatoolkit=11.3
 
 ## Pretrained models
 
@@ -48,6 +52,26 @@ You can run the following code for testing：
 You can obtain the quantitative metrics of the experiments by running the following command：
 
     python measure.py
+
+## Training
+
+You can train your own model by running the following commad. For LOLv1 dataset:
+
+    python main.py --save_folder weights/LOLv1/ --logroot logs/your_log/ --data_train your_train_data \
+    --data_val your_val_data --referance_val the_high_quality_val_data --lr 1e-5 \
+    --light_patch 64 --loss_weights [1, 0.1, 0.1, 0.5]
+
+For LOLv2 dataset:
+
+    python main.py --save_folder weights/LOLv2/ --logroot logs/your_log/ --data_train your_train_data \
+    --data_val your_val_data --referance_val the_high_quality_val_data --lr 5e-6 \
+    --light_patch 64 --loss_weights [1, 0.1, 0.1, 0.5]
+
+For SICE dataset:
+
+    python main.py --save_folder weights/SICE/ --logroot logs/your_log/ ---data_train your_train_data \
+    --data_val your_val_data --referance_val the_high_quality_val_data --lr 1e-5 \
+    --light_patch 32 --loss_weights [1, 0.1, 0.1, 0.01]
 
 ## Results
 
