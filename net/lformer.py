@@ -329,7 +329,7 @@ class F_light_prior_estimater(nn.Module):
         mean_c = img.mean(dim=1).unsqueeze(1)
         # stx()
 
-        f0 = idct_2d(img,norm='ortho')
+        f0 = dct_2d(img,norm='ortho')
         f1 = low_pass(f0, 3*depth).cuda()
         f2 = low_pass_and_shuffle(f0, depth).cuda()
         f3 = high_pass(low_pass(f0, 4*depth), 2*depth).cuda()
