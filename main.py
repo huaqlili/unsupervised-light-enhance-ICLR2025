@@ -1,11 +1,11 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 import torch
 from torchvision.transforms import Resize
 import argparse
 import random
 import shutil
-import clip
+#import clip
 import lpips
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
@@ -16,30 +16,25 @@ from data import get_training_set, get_eval_set
 from utils import *
 from torch.utils.tensorboard import SummaryWriter
 
-#python main.py --save_folder weights/LOLv1/ --logroot logs/your_log/ --data_train your_train_data --data_val your_val_data --referance_val the_high_quality_val_data --lr 1e-5 --light_patch 64 --loss_weights [1, 0.1, 0.1, 0.5]
-#python main.py --save_folder weights/LOLv2/ --logroot logs/your_log/ --data_train your_train_data --data_val your_val_data --referance_val the_high_quality_val_data --lr 5e-6 --light_patch 64 --loss_weights [1, 0.1, 0.1, 0.5]
-#python main.py --save_folder weights/SICE/ --logroot logs/your_log/ ---data_train your_train_data --data_val your_val_data --referance_val the_high_quality_val_data --lr 1e-5 --light_patch 32 --loss_weights [1, 0.1, 0.1, 0.01]
+#python main.py --data_train /data2/lhq/dataset/pair_lie_dataset/PairLIE-training-dataset/ --save_folder weights/prior0.4
 # Training settings
-parser = argparse.ArgumentParser(description='DE-Net')
+parser = argparse.ArgumentParser(description='PairLIE')
 parser.add_argument('--batchSize', type=int, default=1, help='training batch size')
 parser.add_argument('--nEpochs', type=int, default=100, help='number of epochs to train for')
 parser.add_argument('--snapshots', type=int, default=1, help='Snapshots')
 parser.add_argument('--start_iter', type=int, default=1, help='Starting Epoch')
-parser.add_argument('--lr', type=float, default=1e-5, help='Learning Rate. Default=1e-5')
+parser.add_argument('--lr', type=float, default=1e-5, help='Learning Rate. Default=1e-4')
 parser.add_argument('--gpu_mode', type=bool, default=True)
 parser.add_argument('--threads', type=int, default=0, help='number of threads for data loader to use')
 parser.add_argument('--decay', type=int, default='100', help='learning rate decay type')
 parser.add_argument('--gamma', type=float, default=0.5, help='learning rate decay factor for step decay')
-parser.add_argument('--gama', type=float, default=1)
-parser.add_argument('--seed', type=int, default=123, help='random seed to use. Default=123')
-parser.add_argument('--data_train', type=str, default='')
-parser.add_argument('--data_val', type=str, default='')
-parser.add_argument('--referance_val', type=str, default='')
-parser.add_argument('--loss_weights', type=list, default=[1, 0.1, 0.1, 0.5])
-parser.add_argument('--light_patch', type=int, default=64, help='the patch size of enhancement loss')
+parser.add_argument('--seed', type=int, default=32, help='random seed to use. Default=32')
+parser.add_argument('--data_train', type=str, default='../dataset/PairLIE-training-dataset/')
+parser.add_argument('--data_val', type=str, default='/data2/lhq/dataset/pair_lie_dataset/PairLIE-testing-dataset/LOL-test/raw/')
 parser.add_argument('--rgb_range', type=int, default=1, help='maximum value of RGB')
 parser.add_argument('--save_folder', default='weights/full_loss/', help='Location to save checkpoint models')
 parser.add_argument('--logroot', default='logs/tiaocan_loss0.1', help='Location to save logs')
+parser.add_argument('--output_folder', default='results/', help='Location to save checkpoint models')
 opt = parser.parse_args()
 
 def seed_torch(seed=opt.seed):
@@ -55,41 +50,60 @@ cudnn.benchmark = True
 def train():
     model.train()
     loss_print = 0
+    """ CLIP, preprocess = clip.load("RN50", device=device)
+    torch_resize = Resize([224,224])
 
-    l_e = L_exp(opt.light_patch,0.5)
+    text1 = clip.tokenize(["low light image", "high light image"]).to(device)
+    text2 = clip.tokenize(["noisy", "noiseless"]).to(device) """
+    #text3 = clip.tokenize(["noisy", "noiseless"]).to(device)
+    """ I_clip_pool = ImagePool(50)
+    real_B=np.array([[0., 1.]])
+    real_B=torch.Tensor(real_B).to(device) """
+
+    l_e = L_exp(48,0.5)
     l_color = L_color()
     l_spa = L_spa()
     l_tv = L_TV()
+    #criterionCycle = torch.nn.L1Loss()
     for iteration, batch in enumerate(training_data_loader, 1):
 
         input, file1 = batch[0], batch[1]
         input = input.cuda()
-        im1, im2 = pair_downsampler(input)
+        mask1, mask2 = generate_mask_pair(input)
+        im1 = generate_subimages(input, mask1)
+        im2 = generate_subimages(input, mask2)
 
         im2 = gamma_correction(im2)
-        #im2 = im1.pow(1 / opt.gama)
         #print(im1)
         im1 = im1.cuda()
         im2 = im2.cuda()
-
         L1, el1, R1, X1, I1 = model(im1)
         L2, el2, R2, X2, _ = model(im2)
         _,_,_,_,R3 = model(input)
-        sub_r1, sub_r2 = pair_downsampler(R3)
+        sub_r1 = generate_subimages(R3,mask1)
+        sub_r2 = generate_subimages(R3,mask2)
 
         I1 = torch.clamp(I1, 0, 1)
-        #el1 = torch.clamp(el1, 0, 1)
+        el1 = torch.clamp(el1, 0, 1)
         X1 = torch.clamp(X1, 0, 1)
         R1 = torch.clamp(R1, 0, 1)
         R2 = torch.clamp(R2, 0, 1)
         #DI1 = torch.clamp(DI1, 0, 1)
         
+        """ I_CLIP = torch_resize(I_clip_pool.query(I1))
+        logits_per_image, logits_per_text = CLIP(I_CLIP, text2)
+        probs = logits_per_image.softmax(dim=-1)
+        loss_I_CLIP = criterionCycle(probs, real_B) """
+        #print(loss_I_CLIP)
         loss1 = C_loss(R1, R2) + C_loss(R1-R2, sub_r1-sub_r2) * 0.5
-        #loss1 = C_loss(R1, R2)
         loss2 = R_loss(L1, R1, im1, X1)
         loss3 = P_loss(im1, X1)
-        loss4 = opt.loss_weights[0]*l_e(I1) + opt.loss_weights[1]*torch.mean(l_spa(X1, I1)) + opt.loss_weights[2]*l_tv(I1) + opt.loss_weights[3]*torch.mean(l_color(I1))
-        loss =  loss1 + loss2 + loss3 * 500 + loss4
+        #loss4 = l_e(I1) + 0.1*torch.mean(l_spa(X1, I1)) + 0.25*loss_I_CLIP
+        #e_loss = enhancement_loss(X1, el1)
+        #print("eloss:",e_loss)
+        loss4 = l_e(I1) + 0.1*torch.mean(l_spa(X1, I1)) + 0.1*l_tv(I1) + 0.5*torch.mean(l_color(I1))
+        #print("loss4:",loss4)
+        loss =  loss1  + loss2  + loss3 * 500 + loss4
         #print(loss4)
 
         optimizer.zero_grad()
@@ -102,10 +116,9 @@ def train():
             loss_print = 0
 
 def checkpoint(epoch):
-    model_out_path = os.path.join(opt.save_folder, f"epoch_{epoch}.pth")
+    model_out_path = opt.save_folder+"epoch_{}.pth".format(epoch)
     torch.save(model.state_dict(), model_out_path)
     print("Checkpoint saved to {}".format(model_out_path))
-
 def ssim(prediction, target):
     C1 = (0.01 * 255)**2
     C2 = (0.03 * 255)**2
@@ -178,12 +191,12 @@ for i in range(1, opt.nEpochs+1):
         milestones.append(i)
 
 scheduler = lrs.MultiStepLR(optimizer, milestones, opt.gamma)
-label_dir = opt.referance_val
-score_best_epoch = 0
-best_score = 0
+label_dir = '/data2/lhq/dataset/pair_lie_dataset/PairLIE-testing-dataset/LOL-test/reference/'
+score_best = 0
+# shutil.rmtree(opt.save_folder)
+# os.mkdir(opt.save_folder)
 if not os.path.exists(opt.save_folder):
     os.mkdir(opt.save_folder)
-
 for epoch in range(opt.start_iter, opt.nEpochs + 1):
     train()
     scheduler.step()
@@ -202,7 +215,7 @@ for epoch in range(opt.start_iter, opt.nEpochs + 1):
             with torch.no_grad():
                 input, name = batch[0], batch[1]
             input = input.cuda()
-            #print(name)
+            print(name)
 
             with torch.no_grad():
                 L, el, R, X ,I= model(input)
@@ -212,7 +225,6 @@ for epoch in range(opt.start_iter, opt.nEpochs + 1):
                 #EN_I = torch.clamp(EN_I, 0, 1)
                 #print(EN_I.shape)
 
-            #im2 = Image.open(label_dir + name[0].split('_')[0] + '.JPG').convert('RGB')
             im2 = Image.open(label_dir + name[0]).convert('RGB')
             (h, w) = im2.size
             im1 = I.squeeze(0)
@@ -225,7 +237,6 @@ for epoch in range(opt.start_iter, opt.nEpochs + 1):
             score_ssim = calculate_ssim(im1, im2)
 
             ex_p0 = I
-            #ex_ref = lpips.im2tensor(lpips.load_image(label_dir + name[0].split('_')[0] + '.JPG'))
             ex_ref = lpips.im2tensor(lpips.load_image(label_dir + name[0]))
             ex_p0 = ex_p0.cuda()
             ex_ref = ex_ref.cuda()
@@ -238,11 +249,6 @@ for epoch in range(opt.start_iter, opt.nEpochs + 1):
         avg_psnr = avg_psnr / n
         avg_ssim = avg_ssim / n
         avg_lpips = avg_lpips / n
-        
-        if avg_psnr >= best_score:
-            best_score = avg_psnr
-            score_best_epoch = epoch
-        
         writer.add_scalar('psnr', avg_psnr, epoch)
         writer.add_scalar('ssim', avg_ssim, epoch)
         writer.add_scalar('lpips', avg_lpips, epoch)
@@ -250,10 +256,4 @@ for epoch in range(opt.start_iter, opt.nEpochs + 1):
         print("===> Avg.PSNR: {:.4f} dB ".format(avg_psnr))
         print("===> Avg.SSIM: {:.4f} ".format(avg_ssim))
         print("===> Avg.LPIPS: {:.4f} ".format(avg_lpips.item()))
-
-source_file = os.path.join(opt.save_folder, f"epoch_{score_best_epoch}.pth")
-target_file = os.path.join(opt.save_folder, "last_result.pth")
-
-if os.path.exists(source_file):
-    shutil.copy(source_file, target_file)
 
