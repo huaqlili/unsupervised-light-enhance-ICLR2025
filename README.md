@@ -1,6 +1,8 @@
-# Interpretable Unsupervised Joint Denoising and Enhancement for Real-World low-light Scenarios (ICLR2025)
+# Interpretable Unsupervised Joint Denoising and Enhancement for Real-World Low-Light Scenarios (ICLR 2025)
 
-[Paper](https://arxiv.org/abs/2503.14535) | [Openreview](https://openreview.net/forum?id=PVHoELf5UN&noteId=tWR79MUc4B)
+[Paper](https://arxiv.org/abs/2503.14535) | [ICLR Proceedings](https://proceedings.iclr.cc/paper_files/paper/2025/hash/6264f71a529a6d83a7a5dd3530f4f321-Abstract-Conference.html) | [OpenReview](https://openreview.net/forum?id=PVHoELf5UN)
+
+Official implementation of the ICLR 2025 paper on interpretable, zero-reference joint low-light enhancement and denoising.
 
 #### News
 - **Jan 22, 2025:**  Our work of unsupervised joint denoising and enhancement has been accepted to ICLR 2025!
@@ -55,25 +57,27 @@ You can obtain the quantitative metrics of the experiments by running the follow
 
 ## Training
 
-You can train your own model by running the following commad. For LOLv1 dataset:
+You can train your own model by running the following command. For the LOLv1 dataset:
 
     python main.py --save_folder weights/LOLv1/ --logroot logs/your_log/ --data_train your_train_data \
-    --data_val your_val_data --referance_val the_high_quality_val_data --lr 1e-5 \
+    --data_val your_val_data --reference_val the_high_quality_val_data --lr 1e-5 \
     --light_patch 64 --loss_weights [1, 0.1, 0.1, 0.5]
 
 For LOLv2 dataset:
 
     python main.py --save_folder weights/LOLv2/ --logroot logs/your_log/ --data_train your_train_data \
-    --data_val your_val_data --referance_val the_high_quality_val_data --lr 5e-6 \
+    --data_val your_val_data --reference_val the_high_quality_val_data --lr 5e-6 \
     --light_patch 64 --loss_weights [1, 0.1, 0.1, 0.5]
 
 For SICE dataset:
 
-    python main.py --save_folder weights/SICE/ --logroot logs/your_log/ ---data_train your_train_data \
-    --data_val your_val_data --referance_val the_high_quality_val_data --lr 1e-5 \
+    python main.py --save_folder weights/SICE/ --logroot logs/your_log/ --data_train your_train_data \
+    --data_val your_val_data --reference_val the_high_quality_val_data --lr 1e-5 \
     --light_patch 32 --loss_weights [1, 0.1, 0.1, 0.01]
 
 ## Results
+
+The method is evaluated on paired and real-world low-light benchmarks, including LOLv1, LOLv2-Real, SICE, and SIDD. The tables below report full-reference enhancement scores and no-reference quality scores for real-world noisy images. Please consult the paper for the complete evaluation protocol and ablations.
 
 <p align="center">
   <img width="800" src="figs/tab1.jpg">
@@ -86,10 +90,10 @@ For SICE dataset:
 ## Citation
 If you use our project, please consider citing:
 
-    @article{li2025Interpretable,
-      title={Interpretable Unsupervised Joint Denoising and Enhancement for Real-World low-light Scenarios Unsupervised Joint Denoising and Enhancement for Real-World low-light Scenarios},
-      author={Huaqiu Li and Xiaowan Hu and Haoqian Wang},
-      journal={ICLR},
+    @inproceedings{li2025interpretable,
+      title={Interpretable Unsupervised Joint Denoising and Enhancement for Real-World Low-Light Scenarios},
+      author={Li, Huaqiu and Hu, Xiaowan and Wang, Haoqian},
+      booktitle={International Conference on Learning Representations},
       year={2025}
     }
 

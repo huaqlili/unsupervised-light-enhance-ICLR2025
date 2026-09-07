@@ -31,6 +31,9 @@ parser.add_argument('--gamma', type=float, default=0.5, help='learning rate deca
 parser.add_argument('--seed', type=int, default=32, help='random seed to use. Default=32')
 parser.add_argument('--data_train', type=str, default='../dataset/PairLIE-training-dataset/')
 parser.add_argument('--data_val', type=str, default='/data2/lhq/dataset/pair_lie_dataset/PairLIE-testing-dataset/LOL-test/raw/')
+parser.add_argument('--reference_val', '--referance_val', dest='reference_val', type=str,
+                    default='/data2/lhq/dataset/pair_lie_dataset/PairLIE-testing-dataset/LOL-test/reference/',
+                    help='Path to the high-quality validation reference images')
 parser.add_argument('--rgb_range', type=int, default=1, help='maximum value of RGB')
 parser.add_argument('--save_folder', default='weights/full_loss/', help='Location to save checkpoint models')
 parser.add_argument('--logroot', default='logs/tiaocan_loss0.1', help='Location to save logs')
@@ -191,7 +194,7 @@ for i in range(1, opt.nEpochs+1):
         milestones.append(i)
 
 scheduler = lrs.MultiStepLR(optimizer, milestones, opt.gamma)
-label_dir = '/data2/lhq/dataset/pair_lie_dataset/PairLIE-testing-dataset/LOL-test/reference/'
+label_dir = opt.reference_val
 score_best = 0
 # shutil.rmtree(opt.save_folder)
 # os.mkdir(opt.save_folder)
@@ -256,4 +259,3 @@ for epoch in range(opt.start_iter, opt.nEpochs + 1):
         print("===> Avg.PSNR: {:.4f} dB ".format(avg_psnr))
         print("===> Avg.SSIM: {:.4f} ".format(avg_ssim))
         print("===> Avg.LPIPS: {:.4f} ".format(avg_lpips.item()))
-
